@@ -1,5 +1,5 @@
 let lastPlayingTabId = null;
-let lastMediaInfo = { title: '', channel: '' };
+let lastMediaInfo = { title: '', channel: '', thumbnail: '' };
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.action === 'getAudibleTabs') {
@@ -84,8 +84,15 @@ function getMediaInfo() {
         const channelElement = document.querySelector('ytd-channel-name a');
         const channel = channelElement ? channelElement.textContent.trim() : 'Unknown Channel';
 
+        // Extract thumbnail URL
+        let thumbnail = '';
+        const videoIdMatch = window.location.href.match(/[?&]v=([^&]+)/);
+        if (videoIdMatch && videoIdMatch[1]) {
+            thumbnail = `https://img.youtube.com/vi/${videoIdMatch[1]}/hqdefault.jpg`;
+        }
+
         // Save the last media info
-        lastMediaInfo = { title, channel };
+        lastMediaInfo = { title, channel, thumbnail };
 
         chrome.runtime.sendMessage({
             action: 'mediaInfo',
@@ -93,7 +100,8 @@ function getMediaInfo() {
             duration: media.duration,
             paused: media.paused,
             title,
-            channel
+            channel,
+            thumbnail
         });
 
         if (!media.paused) {

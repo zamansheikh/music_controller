@@ -27,6 +27,13 @@ document.addEventListener('DOMContentLoaded', () => {
     if (lastMediaInfo && lastMediaInfo.title) {
       titleDiv.textContent = `Paused: ${lastMediaInfo.title}`;
       channelDiv.textContent = lastMediaInfo.channel || 'Unknown Channel';
+      if (lastMediaInfo.thumbnail) {
+        thumbnailImg.src = lastMediaInfo.thumbnail;
+        thumbnailImg.style.display = 'block';
+      } else {
+        thumbnailImg.src = '';
+        thumbnailImg.style.display = 'none';
+      }
       controlsDiv.style.display = 'flex';
     }
   });
@@ -59,6 +66,13 @@ document.addEventListener('DOMContentLoaded', () => {
           if (mediaInfo && mediaInfo.title) {
             titleDiv.textContent = `${mediaInfo.paused ? 'Paused' : 'Playing'}: ${mediaInfo.title}`;
             channelDiv.textContent = mediaInfo.channel || 'Unknown Channel';
+            if (mediaInfo.thumbnail) {
+              thumbnailImg.src = mediaInfo.thumbnail;
+              thumbnailImg.style.display = 'block';
+            } else {
+              thumbnailImg.src = '';
+              thumbnailImg.style.display = 'none';
+            }
           } else {
             titleDiv.textContent = 'No music detected';
             channelDiv.textContent = 'Unknown Channel';
@@ -118,6 +132,13 @@ document.addEventListener('DOMContentLoaded', () => {
       updateMuteIcon(isMuted);
       titleDiv.textContent = `${message.paused ? 'Paused' : 'Playing'}: ${message.title}`;
       channelDiv.textContent = message.channel || 'Unknown Channel';
+      if (message.thumbnail) {
+        thumbnailImg.src = message.thumbnail;
+        thumbnailImg.style.display = 'block';
+      } else {
+        thumbnailImg.src = '';
+        thumbnailImg.style.display = 'none';
+      }
     } else if (message.action === 'youtubeInfo') {
       // Update channel name and thumbnail
       channelDiv.textContent = message.channel || '';
