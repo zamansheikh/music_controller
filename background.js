@@ -1,103 +1,268 @@
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (message.action === 'getAudibleTabs') {
-    chrome.tabs.query({ audible: true }, (tabs) => {
-      sendResponse({ tabs });
-    });
-    return true; // Keep message channel open for async response
-  } else if (message.action === 'getMediaInfo') {
-    chrome.scripting.executeScript({
-      target: { tabId: message.tabId },
-      func: getMediaInfo
-    });
-  } else if (message.action === 'togglePlayPause') {
-    chrome.scripting.executeScript({
-      target: { tabId: message.tabId },
-      func: togglePlayPause
-    });
-  } else if (message.action === 'seek') {
-    chrome.scripting.executeScript({
-      target: { tabId: message.tabId },
-      func: seekMedia,
-      args: [message.time]
-    });
-  } else if (message.action === 'previousTrack') {
-    chrome.scripting.executeScript({
-      target: { tabId: message.tabId },
-      func: previousTrack
-    });
-  } else if (message.action === 'nextTrack') {
-    chrome.scripting.executeScript({
-      target: { tabId: message.tabId },
-      func: nextTrack
-    });
-  }
+    if (message.action === 'getAudibleTabs') {
+        chrome.tabs.query({ audible: true }, (tabs) => {
+            sendResponse({ tabs });
+        });
+        return true; // Keep message channel open for async response
+    } else if (message.action === 'getMediaInfo') {
+        chrome.scripting.executeScript({
+            target: { tabId: message.tabId },
+            func: getMediaInfo
+        });
+    } else if (message.action === 'togglePlayPause') {
+        chrome.scripting.executeScript({
+            target: { tabId: message.tabId },
+            func: togglePlayPause
+        });
+    } else if (message.action === 'seek') {
+        chrome.scripting.executeScript({
+            target: { tabId: message.tabId },
+            func: seekMedia,
+            args: [message.time]
+        });
+    } else if (message.action === 'previousTrack') {
+        chrome.scripting.executeScript({
+            target: { tabId: message.tabId },
+            func: previousTrack
+        });
+    } else if (message.action === 'nextTrack') {
+        chrome.scripting.executeScript({
+            target: { tabId: message.tabId },
+            func: nextTrack
+        });
+    }
 });
 
 // Forward media info to popup
 chrome.runtime.onMessage.addListener((message, sender) => {
-  if (message.action === 'mediaInfo') {
-    chrome.runtime.sendMessage(message);
-  }
+    if (message.action === 'mediaInfo') {
+        chrome.runtime.sendMessage(message);
+    }
 });
 
 // Listen for tab activation changes
 chrome.tabs.onActivated.addListener((activeInfo) => {
-  chrome.runtime.sendMessage({ action: 'updateAudibleTab' });
+    chrome.runtime.sendMessage({ action: 'updateAudibleTab' });
 });
 
 // Listen for tab updates (e.g., audible state changes)
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
-  if (changeInfo.audible !== undefined) {
-    chrome.runtime.sendMessage({ action: 'updateAudibleTab' });
-  }
+    if (changeInfo.audible !== undefined) {
+        chrome.runtime.sendMessage({ action: 'updateAudibleTab' });
+    }
 });
 
 function getMediaInfo() {
-  const media = document.querySelector('audio, video');
-  if (media) {
-    chrome.runtime.sendMessage({
-      action: 'mediaInfo',
-      currentTime: media.currentTime,
-      duration: media.duration,
-      paused: media.paused
-    });
-  }
+    const media = document.querySelector('audio, video');
+    if (media) {
+        chrome.runtime.sendMessage({
+            action: 'mediaInfo',
+            currentTime: media.currentTime,
+            duration: media.duration,
+            paused: media.paused
+        });
+    }
 }
 
 function togglePlayPause() {
-  const media = document.querySelector('audio, video');
-  if (media) {
-    if (media.paused) {
-      media.play();
-    } else {
-      media.pause();
+    const media = document.querySelector('audio, video');
+    if (media) {
+        if (media.paused) {
+            media.play();
+        } else {
+            media.pause();
+        }
     }
-  }
 }
 
 function seekMedia(time) {
-  const media = document.querySelector('audio, video');
-  if (media) {
-    media.currentTime = time;
-  }
+    const media = document.querySelector('audio, video');
+    if (media) {
+        media.currentTime = time;
+    }
 }
 
 function previousTrack() {
-  const event = new KeyboardEvent('keydown', {
-    key: 'MediaPreviousTrack',
-    code: 'MediaPreviousTrack',
-    bubbles: true,
-    cancelable: true
-  });
-  document.dispatchEvent(event);
+    // Try multiple approaches for previous track functionality
+    console.log("Attempting to find previous track buttons...");
+
+    // 1. First try YouTube-specific selectors based on their actual DOM structure
+    const youtubeSelectors = [
+        '.ytp-prev-button',
+        'a[aria-label="Replay"]',
+        'a[aria-label="Previous"]',
+        'a[title*="Previous"]',
+        'a[title="Replay"]'
+    ];
+
+    for (const selector of youtubeSelectors) {
+        const button = document.querySelector(selector);
+        if (button) {
+            console.log(`Found YouTube button: ${selector}`);
+            button.click();
+            return;
+        }
+    }
+
+    // 2. Try to find and click previous buttons with expanded selector criteria
+    const prevButtons = Array.from(document.querySelectorAll('button, a, [role="button"], [data-testid*="prev"], [id*="prev"], [class*="prev"], [class*="back"], [data-control="prev"]')).filter(el => {
+        const text = (el.textContent || '').toLowerCase().trim();
+        const ariaLabel = (el.getAttribute('aria-label') || '').toLowerCase();
+        const title = (el.getAttribute('title') || '').toLowerCase();
+        const id = (el.id || '').toLowerCase();
+        const className = (el.className || '').toLowerCase();
+
+        // Expanded detection criteria
+        return (text.includes('prev') || text.includes('back') || text.includes('←') ||
+            ariaLabel.includes('previous') || ariaLabel.includes('prev') || ariaLabel.includes('back') || ariaLabel.includes('replay') ||
+            title.includes('previous') || title.includes('prev') || title.includes('back') || title.includes('replay') ||
+            id.includes('prev') || id.includes('previous') || id.includes('back') ||
+            className.includes('prev') || className.includes('previous') || className.includes('back') ||
+            (el.querySelector('svg, img, i, span') && (
+                (el.querySelector('svg, img, i, span').className || '').toLowerCase().includes('prev') ||
+                (el.querySelector('svg, img, i, span').className || '').toLowerCase().includes('back')
+            ))
+        );
+    });
+
+    // For debugging
+    console.log(`Found ${prevButtons.length} potential previous buttons`);
+    prevButtons.forEach((btn, i) => {
+        console.log(`Button ${i}: ${btn.outerHTML.substring(0, 100)}`);
+    });
+
+    if (prevButtons.length > 0) {
+        // Click the most likely previous button (first one found)
+        prevButtons[0].click();
+        return;
+    }
+
+    // 3. Try keyboard shortcuts specifically suited for YouTube (j for previous in YouTube)
+    const youtubeKeyboardShortcuts = [
+        { key: 'j', code: 'KeyJ' }, // YouTube previous shortcut
+        { key: ',', code: 'Comma' }, // YouTube frame-by-frame backward
+        { key: 'SHIFT+p', code: 'KeyP', shiftKey: true }  // Some YouTube implementations
+    ];
+
+    for (const shortcut of youtubeKeyboardShortcuts) {
+        const downEvent = new KeyboardEvent('keydown', {
+            key: shortcut.key,
+            code: shortcut.code,
+            shiftKey: !!shortcut.shiftKey,
+            bubbles: true,
+            cancelable: true
+        });
+        document.dispatchEvent(downEvent);
+
+        // Send keyup event immediately after
+        const upEvent = new KeyboardEvent('keyup', {
+            key: shortcut.key,
+            code: shortcut.code,
+            shiftKey: !!shortcut.shiftKey,
+            bubbles: true,
+            cancelable: true
+        });
+        document.dispatchEvent(upEvent);
+    }
+
+    // 4. Try site-specific selectors for popular streaming services
+    const siteSpecificSelectors = [
+        'button[aria-label*="Previous"]',
+        'button[data-testid="control-button-skip-back"]',
+        '.ytp-prev-button',
+        '[data-test="previous-button"]',
+        '.previous-button',
+        '.prevButton',
+        '.backButton',
+        '.player-controls__btn--prev',
+        // Add more YouTube-specific selectors
+        '[aria-label="Replay"]',
+        '[title="Replay"]'
+    ];
+
+    for (const selector of siteSpecificSelectors) {
+        const button = document.querySelector(selector);
+        if (button) {
+            button.click();
+            return;
+        }
+    }
+
+    // 5. Try common keyboard shortcuts as last resort
+    const shortcuts = [
+        { key: 'MediaTrackPrevious', code: 'MediaTrackPrevious' },
+        { key: 'MediaPreviousTrack', code: 'MediaPreviousTrack' },
+        { key: 'p', code: 'KeyP' },
+        { key: 'b', code: 'KeyB' },
+        { key: 'ArrowLeft', code: 'ArrowLeft', shiftKey: true },
+        { key: 'Left', code: 'ArrowLeft', shiftKey: true },
+        { key: 'ArrowLeft', code: 'ArrowLeft', ctrlKey: true }
+    ];
+
+    // Send both keydown and keyup events for better simulation
+    for (const shortcut of shortcuts) {
+        const downEvent = new KeyboardEvent('keydown', {
+            key: shortcut.key,
+            code: shortcut.code,
+            shiftKey: !!shortcut.shiftKey,
+            ctrlKey: !!shortcut.ctrlKey,
+            bubbles: true,
+            cancelable: true
+        });
+
+        document.dispatchEvent(downEvent);
+
+        // Send keyup event after a slight delay
+        setTimeout(() => {
+            const upEvent = new KeyboardEvent('keyup', {
+                key: shortcut.key,
+                code: shortcut.code,
+                shiftKey: !!shortcut.shiftKey,
+                ctrlKey: !!shortcut.ctrlKey,
+                bubbles: true,
+                cancelable: true
+            });
+            document.dispatchEvent(upEvent);
+        }, 10);
+    }
 }
 
 function nextTrack() {
-  const event = new KeyboardEvent('keydown', {
-    key: 'MediaNextTrack',
-    code: 'MediaNextTrack',
-    bubbles: true,
-    cancelable: true
-  });
-  document.dispatchEvent(event);
+    // Try multiple approaches for next track functionality
+
+    // 1. Try to find and click next buttons
+    const nextButtons = Array.from(document.querySelectorAll('button, a, [role="button"]')).filter(el => {
+        const text = el.textContent.toLowerCase().trim();
+        const ariaLabel = (el.getAttribute('aria-label') || '').toLowerCase();
+        const title = (el.getAttribute('title') || '').toLowerCase();
+
+        return (text.includes('next') || ariaLabel.includes('next') ||
+            title.includes('next') || el.classList.contains('next') ||
+            (el.querySelector('svg, img, i') && (ariaLabel.includes('next') || title.includes('next'))));
+    });
+
+    if (nextButtons.length > 0) {
+        nextButtons[0].click();
+        return;
+    }
+
+    // 2. Try common keyboard shortcuts for next track
+    const shortcuts = [
+        { key: 'MediaTrackNext', code: 'MediaTrackNext' },
+        { key: 'MediaNextTrack', code: 'MediaNextTrack' },
+        { key: 'n', code: 'KeyN' },
+        { key: 'ArrowRight', code: 'ArrowRight', shiftKey: true },
+        { key: 'Right', code: 'ArrowRight', shiftKey: true }
+    ];
+
+    for (const shortcut of shortcuts) {
+        const event = new KeyboardEvent('keydown', {
+            key: shortcut.key,
+            code: shortcut.code,
+            shiftKey: !!shortcut.shiftKey,
+            bubbles: true,
+            cancelable: true
+        });
+        document.dispatchEvent(event);
+    }
 }
