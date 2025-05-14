@@ -409,15 +409,15 @@ function getYouTubeInfo() {
 
         // Extract thumbnail URL
         let thumbnail = '';
-        const metaThumbnail = document.querySelector('meta[property="og:image"]');
-        if (metaThumbnail) {
-            thumbnail = metaThumbnail.getAttribute('content') || '';
+        const videoIdMatch = window.location.href.match(/[?&]v=([^&]+)/);
+        if (videoIdMatch && videoIdMatch[1]) {
+            // Construct thumbnail URL from video ID
+            thumbnail = `https://img.youtube.com/vi/${videoIdMatch[1]}/hqdefault.jpg`;
         } else {
-            // Fallback to constructing thumbnail URL from video ID
-            const url = window.location.href;
-            const videoIdMatch = url.match(/[?&]v=([^&]+)/);
-            if (videoIdMatch && videoIdMatch[1]) {
-                thumbnail = `https://img.youtube.com/vi/${videoIdMatch[1]}/default.jpg`;
+            // Fallback to meta tag
+            const metaThumbnail = document.querySelector('meta[property="og:image"]');
+            if (metaThumbnail) {
+                thumbnail = metaThumbnail.getAttribute('content') || '';
             }
         }
 
