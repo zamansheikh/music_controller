@@ -1,19 +1,29 @@
+let lastPlayingTabId = null;
+
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.action === 'getAudibleTabs') {
         chrome.tabs.query({ audible: true }, (tabs) => {
+            if (tabs.length > 0) {
+                lastPlayingTabId = tabs[0].id; // Update the last playing tab
+            }
             sendResponse({ tabs });
         });
         return true; // Keep message channel open for async response
+    } else if (message.action === 'getLastPlayingTab') {
+        sendResponse({ tabId: lastPlayingTabId }); // Return the last playing tab ID
     } else if (message.action === 'getMediaInfo') {
         chrome.scripting.executeScript({
             target: { tabId: message.tabId },
             func: getMediaInfo
         });
     } else if (message.action === 'togglePlayPause') {
-        chrome.scripting.executeScript({
-            target: { tabId: message.tabId },
-            func: togglePlayPause
-        });
+        const targetTabId = message.tabId || lastPlayingTabId; // Use the last playing tab if no tabId is provided
+        if (targetTabId) {
+            chrome.scripting.executeScript({
+                target: { tabId: targetTabId },
+                func: togglePlayPause
+            });
+        }
     } else if (message.action === 'seek') {
         chrome.scripting.executeScript({
             target: { tabId: message.tabId },
@@ -63,6 +73,7 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
     }
 });
 
+// Update lastPlayingTabId when media info is received
 function getMediaInfo() {
     const media = document.querySelector('audio, video');
     if (media) {
@@ -72,6 +83,12 @@ function getMediaInfo() {
             duration: media.duration,
             paused: media.paused
         });
+        if (!media.paused) {
+            chrome.runtime.sendMessage({ action: 'updateLastPlayingTab' });
+        } else {
+            // Update lastPlayingTabId even when paused
+            chrome.runtime.sendMessage({ action: 'updateLastPlayingTab' });
+        }
     }
 }
 
@@ -425,3 +442,10 @@ function toggleMute(muted) {
         media.muted = muted;
     }
 }
+
+// Listen for a message to update the last playing tab
+chrome.runtime.onMessage.addListener((message, sender) => {
+    if (message.action === 'updateLastPlayingTab' && sender.tab) {
+        lastPlayingTabId = sender.tab.id;
+    }
+});

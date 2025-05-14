@@ -13,6 +13,15 @@ document.addEventListener('DOMContentLoaded', () => {
   let duration = 0;
   let isMuted = false;
 
+  chrome.runtime.sendMessage({ action: 'getLastPlayingTab' }, (response) => {
+    if (response && response.tabId) {
+      tabId = response.tabId; // Restore the last playing tab ID
+      chrome.runtime.sendMessage({ action: 'getMediaInfo', tabId }); // Request media info for the tab
+    } else {
+      updateAudibleTab(); // Fallback to detecting audible tabs
+    }
+  });
+
   // Function to update audible tab
   function updateAudibleTab() {
     chrome.runtime.sendMessage({ action: 'getAudibleTabs' }, (response) => {
@@ -34,6 +43,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Request media info
         chrome.runtime.sendMessage({ action: 'getMediaInfo', tabId });
+      } else if (tabId) {
+        // If no audible tabs are found but a tabId exists, retain the last state
+        statusDiv.textContent = 'Paused';
+        controlsDiv.style.display = 'flex';
       } else {
         tabId = null;
         statusDiv.textContent = 'No music detected';
@@ -100,9 +113,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Play/Pause button
   playPauseBtn.addEventListener('click', () => {
-    if (tabId) {
-      chrome.runtime.sendMessage({ action: 'togglePlayPause', tabId });
-    }
+    chrome.runtime.sendMessage({ action: 'togglePlayPause', tabId });
   });
 
   // Previous Track button
