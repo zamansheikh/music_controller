@@ -22,6 +22,15 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
+  // Retrieve last saved media info
+  chrome.runtime.sendMessage({ action: 'getLastMediaInfo' }, (lastMediaInfo) => {
+    if (lastMediaInfo && lastMediaInfo.title) {
+      titleDiv.textContent = `Paused: ${lastMediaInfo.title}`;
+      channelDiv.textContent = lastMediaInfo.channel || 'Unknown Channel';
+      controlsDiv.style.display = 'flex';
+    }
+  });
+
   // Function to update audible tab
   function updateAudibleTab() {
     chrome.runtime.sendMessage({ action: 'getAudibleTabs' }, (response) => {
@@ -29,7 +38,7 @@ document.addEventListener('DOMContentLoaded', () => {
         tabId = response.tabs[0].id;
         const tab = response.tabs[0];
         titleDiv.textContent = `Playing: ${tab.title.slice(0, 30)}${tab.title.length > 30 ? '...' : ''}`;
-        channelDiv.textContent = tab.channel || ''; //Here i assume channel info is in the tab object
+        channelDiv.textContent = tab.channel || ''; // Here I assume channel info is in the tab object
         controlsDiv.style.display = 'flex';
 
         // Check if the tab is a YouTube video and request channel/thumbnail info
@@ -48,9 +57,11 @@ document.addEventListener('DOMContentLoaded', () => {
         // If no audible tabs are found but a tabId exists, retain the last state
         chrome.runtime.sendMessage({ action: 'getMediaInfo', tabId }, (mediaInfo) => {
           if (mediaInfo && mediaInfo.title) {
-            titleDiv.textContent = `Paused: ${mediaInfo.title.slice(0, 30)}${mediaInfo.title.length > 30 ? '...' : ''}`;
+            titleDiv.textContent = `${mediaInfo.paused ? 'Paused' : 'Playing'}: ${mediaInfo.title}`;
+            channelDiv.textContent = mediaInfo.channel || 'Unknown Channel';
           } else {
-            titleDiv.textContent = 'Paused';
+            titleDiv.textContent = 'No music detected';
+            channelDiv.textContent = 'Unknown Channel';
           }
         });
         controlsDiv.style.display = 'flex';
@@ -64,10 +75,10 @@ document.addEventListener('DOMContentLoaded', () => {
         timeDiv.textContent = '0:00 / 0:00';
         seekSlider.value = 0;
         const playPauseImg = playPauseBtn.querySelector('img');
-        playPauseImg.src = 'play.svg'; // Reset to play icon
+        playPauseImg.src = 'play.svg';
         playPauseImg.alt = 'Play';
         const muteImg = muteBtn.querySelector('img');
-        muteImg.src = 'unmute.svg'; // Reset to unmute icon
+        muteImg.src = 'unmute.svg';
         muteImg.alt = 'Unmute';
         isMuted = false;
       }
@@ -105,6 +116,8 @@ document.addEventListener('DOMContentLoaded', () => {
       timeDiv.textContent = `${formatTime(message.currentTime || 0)} / ${formatTime(duration)}`;
       updatePlayPauseIcon(message.paused);
       updateMuteIcon(isMuted);
+      titleDiv.textContent = `${message.paused ? 'Paused' : 'Playing'}: ${message.title}`;
+      channelDiv.textContent = message.channel || 'Unknown Channel';
     } else if (message.action === 'youtubeInfo') {
       // Update channel name and thumbnail
       channelDiv.textContent = message.channel || '';

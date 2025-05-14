@@ -1,4 +1,5 @@
 let lastPlayingTabId = null;
+let lastMediaInfo = { title: '', channel: '' };
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.action === 'getAudibleTabs') {
@@ -51,6 +52,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             func: toggleMute,
             args: [message.muted]
         });
+    } else if (message.action === 'getLastMediaInfo') {
+        sendResponse(lastMediaInfo);
     }
 });
 
@@ -77,16 +80,25 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
 function getMediaInfo() {
     const media = document.querySelector('audio, video');
     if (media) {
+        const title = document.title || 'Unknown Title';
+        const channelElement = document.querySelector('ytd-channel-name a');
+        const channel = channelElement ? channelElement.textContent.trim() : 'Unknown Channel';
+
+        // Save the last media info
+        lastMediaInfo = { title, channel };
+
         chrome.runtime.sendMessage({
             action: 'mediaInfo',
             currentTime: media.currentTime,
             duration: media.duration,
-            paused: media.paused
+            paused: media.paused,
+            title,
+            channel
         });
+
         if (!media.paused) {
             chrome.runtime.sendMessage({ action: 'updateLastPlayingTab' });
         } else {
-            // Update lastPlayingTabId even when paused
             chrome.runtime.sendMessage({ action: 'updateLastPlayingTab' });
         }
     }
