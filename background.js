@@ -383,9 +383,10 @@ function getYouTubeInfo() {
             channel = channelElement.textContent.trim();
         } else {
             // Fallback to meta tag
-            const metaChannel = document.querySelector('meta[name="author"]');
+            const metaChannel = document.querySelector('meta[itemprop="channelId"]');
             if (metaChannel) {
                 channel = metaChannel.getAttribute('content') || '';
+                console.log('Channel from meta tag:', channel);
             }
         }
 
