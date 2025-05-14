@@ -43,11 +43,29 @@ document.addEventListener('DOMContentLoaded', () => {
         controlsDiv.style.display = 'none';
         timeDiv.textContent = '0:00 / 0:00';
         seekSlider.value = 0;
-        playPauseBtn.textContent = '▶️'; // Reset to play icon
-        muteBtn.textContent = '🔊'; // Reset to unmute icon
+        const playPauseImg = playPauseBtn.querySelector('img');
+        playPauseImg.src = 'play.svg'; // Reset to play icon
+        playPauseImg.alt = 'Play';
+        const muteImg = muteBtn.querySelector('img');
+        muteImg.src = 'unmute.svg'; // Reset to unmute icon
+        muteImg.alt = 'Unmute';
         isMuted = false;
       }
     });
+  }
+
+  // Update the play/pause button icon
+  function updatePlayPauseIcon(isPaused) {
+    const playPauseImg = playPauseBtn.querySelector('img');
+    playPauseImg.src = isPaused ? 'play.svg' : 'pause.svg';
+    playPauseImg.alt = isPaused ? 'Play' : 'Pause';
+  }
+
+  // Update the mute button icon
+  function updateMuteIcon(isMuted) {
+    const muteImg = muteBtn.querySelector('img');
+    muteImg.src = isMuted ? 'mute.svg' : 'unmute.svg';
+    muteImg.alt = isMuted ? 'Mute' : 'Unmute';
   }
 
   // Initial check for audible tabs
@@ -65,8 +83,8 @@ document.addEventListener('DOMContentLoaded', () => {
       seekSlider.max = duration;
       seekSlider.value = message.currentTime || 0;
       timeDiv.textContent = `${formatTime(message.currentTime || 0)} / ${formatTime(duration)}`;
-      playPauseBtn.textContent = message.paused ? '▶️' : '⏸️'; // Dynamic play/pause icon
-      muteBtn.textContent = isMuted ? '🔇' : '🔊'; // Dynamic mute/unmute icon
+      updatePlayPauseIcon(message.paused);
+      updateMuteIcon(isMuted);
     } else if (message.action === 'youtubeInfo') {
       // Update channel name and thumbnail
       channelDiv.textContent = message.channel || '';
@@ -105,7 +123,7 @@ document.addEventListener('DOMContentLoaded', () => {
   muteBtn.addEventListener('click', () => {
     if (tabId) {
       isMuted = !isMuted;
-      muteBtn.textContent = isMuted ? '🔇' : '🔊'; // Toggle mute/unmute icon
+      updateMuteIcon(isMuted);
       chrome.runtime.sendMessage({ action: 'toggleMute', tabId, muted: isMuted });
     }
   });
