@@ -29,6 +29,7 @@ document.addEventListener('DOMContentLoaded', () => {
         tabId = response.tabs[0].id;
         const tab = response.tabs[0];
         statusDiv.textContent = `Playing: ${tab.title.slice(0, 30)}${tab.title.length > 30 ? '...' : ''}`;
+        channelDiv.textContent = tab.channel || ''; //Here i assume channel info is in the tab object
         controlsDiv.style.display = 'flex';
 
         // Check if the tab is a YouTube video and request channel/thumbnail info
@@ -56,8 +57,8 @@ document.addEventListener('DOMContentLoaded', () => {
       } else {
         tabId = null;
         statusDiv.textContent = 'No music detected';
-        channelDiv.textContent = '';
-        thumbnailImg.src = '';
+        channelDiv.textContent = 'Unknown Channel';
+        thumbnailImg.src = 'default-thumbnail.png';
         thumbnailImg.style.display = 'none';
         controlsDiv.style.display = 'none';
         timeDiv.textContent = '0:00 / 0:00';
