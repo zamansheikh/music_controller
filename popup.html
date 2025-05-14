@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Music Controller</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        body {
+            width: 300px;
+            font-family: 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #6e8efb, #a777e3);
+            color: #fff;
+            padding: 15px;
+            margin: 0;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        #status {
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 15px;
+            text-align: center;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            overflow: hidden;
+        }
+
+        #controls {
+            display: none;
+            flex-direction: column;
+            gap: 12px;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 10px;
+            border-radius: 8px;
+        }
+
+        #time {
+            font-size: 12px;
+            text-align: center;
+            color: #e0e0e0;
+        }
+
+        #seek {
+            width: 100%;
+            appearance: none;
+            -webkit-appearance: none;
+            height: 6px;
+            border-radius: 5px;
+            background: #ffffff;
+            outline: none;
+            transition: background 0.3s;
+        }
+
+        #seek::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #ff6b6b;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .button-group {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+        }
+
+        button {
+            padding: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            color: #fff;
+            background: #ff6b6b;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s, transform 0.1s;
+            flex: 1;
+        }
+
+        button:hover {
+            background: #ff8787;
+        }
+
+        button:active {
+            transform: scale(0.95);
+        }
+
+        #prevTrack,
+        #nextTrack {
+            background: #6b7280;
+        }
+
+        #prevTrack:hover,
+        #nextTrack:hover {
+            background: #9ca3af;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="status">No music detected</div>
+    <div id="controls">
+        <div id="time">0:00 / 0:00</div>
+        <input type="range" id="seek" min="0" max="100" value="0">
+        <div class="button-group">
+            <button id="prevTrack">Previous</button>
+            <button id="playPause">Play</button>
+            <button id="nextTrack">Next</button>
+        </div>
+    </div>
+    <script src="popup.js"></script>
+</body>
+
+</html>
