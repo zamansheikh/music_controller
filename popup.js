@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
-  const statusDiv = document.getElementById('status');
+  const titleDiv = document.getElementById('video-title');
   const channelDiv = document.getElementById('channel');
   const thumbnailImg = document.getElementById('thumbnail');
   const controlsDiv = document.getElementById('controls');
@@ -28,7 +28,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (response && response.tabs && response.tabs.length > 0) {
         tabId = response.tabs[0].id;
         const tab = response.tabs[0];
-        statusDiv.textContent = `Playing: ${tab.title.slice(0, 30)}${tab.title.length > 30 ? '...' : ''}`;
+        titleDiv.textContent = `Playing: ${tab.title.slice(0, 30)}${tab.title.length > 30 ? '...' : ''}`;
         channelDiv.textContent = tab.channel || ''; //Here i assume channel info is in the tab object
         controlsDiv.style.display = 'flex';
 
@@ -48,15 +48,15 @@ document.addEventListener('DOMContentLoaded', () => {
         // If no audible tabs are found but a tabId exists, retain the last state
         chrome.runtime.sendMessage({ action: 'getMediaInfo', tabId }, (mediaInfo) => {
           if (mediaInfo && mediaInfo.title) {
-            statusDiv.textContent = `Paused: ${mediaInfo.title.slice(0, 30)}${mediaInfo.title.length > 30 ? '...' : ''}`;
+            titleDiv.textContent = `Paused: ${mediaInfo.title.slice(0, 30)}${mediaInfo.title.length > 30 ? '...' : ''}`;
           } else {
-            statusDiv.textContent = 'Paused';
+            titleDiv.textContent = 'Paused';
           }
         });
         controlsDiv.style.display = 'flex';
       } else {
         tabId = null;
-        statusDiv.textContent = 'No music detected';
+        titleDiv.textContent = 'No music detected';
         channelDiv.textContent = 'Unknown Channel';
         thumbnailImg.src = 'default-thumbnail.png';
         thumbnailImg.style.display = 'none';

@@ -395,12 +395,12 @@ function getYouTubeInfo() {
     try {
         // Extract channel name
         let channel = '';
-        const channelElement = document.querySelector('ytd-video-owner-renderer a.yt-simple-endpoint');
+        const channelElement = document.querySelector('ytd-channel-name a');
         if (channelElement) {
             channel = channelElement.textContent.trim();
         } else {
-            // Fallback to meta tag
-            const metaChannel = document.querySelector('meta[itemprop="channelId"]');
+            // Fallback to meta tag for channel name
+            const metaChannel = document.querySelector('meta[name="author"]');
             if (metaChannel) {
                 channel = metaChannel.getAttribute('content') || '';
                 console.log('Channel from meta tag:', channel);
@@ -413,26 +413,16 @@ function getYouTubeInfo() {
         if (videoIdMatch && videoIdMatch[1]) {
             // Construct thumbnail URL from video ID
             thumbnail = `https://img.youtube.com/vi/${videoIdMatch[1]}/hqdefault.jpg`;
-        } else {
-            // Fallback to meta tag
-            const metaThumbnail = document.querySelector('meta[property="og:image"]');
-            if (metaThumbnail) {
-                thumbnail = metaThumbnail.getAttribute('content') || '';
-            }
         }
 
+        // Send YouTube info to popup
         chrome.runtime.sendMessage({
             action: 'youtubeInfo',
-            channel: channel,
-            thumbnail: thumbnail
+            channel,
+            thumbnail
         });
     } catch (error) {
-        console.error('Error in getYouTubeInfo:', error);
-        chrome.runtime.sendMessage({
-            action: 'youtubeInfo',
-            channel: '',
-            thumbnail: ''
-        });
+        console.error('Error extracting YouTube info:', error);
     }
 }
 
