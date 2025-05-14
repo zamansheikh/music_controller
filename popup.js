@@ -45,7 +45,13 @@ document.addEventListener('DOMContentLoaded', () => {
         chrome.runtime.sendMessage({ action: 'getMediaInfo', tabId });
       } else if (tabId) {
         // If no audible tabs are found but a tabId exists, retain the last state
-        statusDiv.textContent = 'Paused';
+        chrome.runtime.sendMessage({ action: 'getMediaInfo', tabId }, (mediaInfo) => {
+          if (mediaInfo && mediaInfo.title) {
+            statusDiv.textContent = `Paused: ${mediaInfo.title.slice(0, 30)}${mediaInfo.title.length > 30 ? '...' : ''}`;
+          } else {
+            statusDiv.textContent = 'Paused';
+          }
+        });
         controlsDiv.style.display = 'flex';
       } else {
         tabId = null;
