@@ -30,12 +30,23 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             target: { tabId: message.tabId },
             func: nextTrack
         });
+    } else if (message.action === 'getYouTubeInfo') {
+        chrome.scripting.executeScript({
+            target: { tabId: message.tabId },
+            func: getYouTubeInfo
+        });
+    } else if (message.action === 'toggleMute') {
+        chrome.scripting.executeScript({
+            target: { tabId: message.tabId },
+            func: toggleMute,
+            args: [message.muted]
+        });
     }
 });
 
-// Forward media info to popup
+// Forward media info and YouTube info to popup
 chrome.runtime.onMessage.addListener((message, sender) => {
-    if (message.action === 'mediaInfo') {
+    if (message.action === 'mediaInfo' || message.action === 'youtubeInfo') {
         chrome.runtime.sendMessage(message);
     }
 });
@@ -229,40 +240,187 @@ function previousTrack() {
 
 function nextTrack() {
     // Try multiple approaches for next track functionality
+    console.log("Attempting to find next track buttons...");
 
-    // 1. Try to find and click next buttons
-    const nextButtons = Array.from(document.querySelectorAll('button, a, [role="button"]')).filter(el => {
-        const text = el.textContent.toLowerCase().trim();
+    // 1. First try YouTube-specific selectors based on their actual DOM structure
+    const youtubeSelectors = [
+        '.ytp-next-button',
+        'a[aria-label="Next"]',
+        'a[title*="Next"]'
+    ];
+
+    for (const selector of youtubeSelectors) {
+        const button = document.querySelector(selector);
+        if (button) {
+            console.log(`Found YouTube button: ${selector}`);
+            button.click();
+            return;
+        }
+    }
+
+    // 2. Try to find and click next buttons with expanded selector criteria
+    const nextButtons = Array.from(document.querySelectorAll('button, a, [role="button"], [data-testid*="next"], [id*="next"], [class*="next"], [data-control="next"]')).filter(el => {
+        const text = (el.textContent || '').toLowerCase().trim();
         const ariaLabel = (el.getAttribute('aria-label') || '').toLowerCase();
         const title = (el.getAttribute('title') || '').toLowerCase();
+        const id = (el.id || '').toLowerCase();
+        const className = (el.className || '').toLowerCase();
 
-        return (text.includes('next') || ariaLabel.includes('next') ||
-            title.includes('next') || el.classList.contains('next') ||
-            (el.querySelector('svg, img, i') && (ariaLabel.includes('next') || title.includes('next'))));
+        return (text.includes('next') || text.includes('→') ||
+            ariaLabel.includes('next') ||
+            title.includes('next') ||
+            id.includes('next') ||
+            className.includes('next') ||
+            (el.querySelector('svg, img, i, span') && (
+                (el.querySelector('svg, img, i, span').className || '').toLowerCase().includes('next')
+            ))
+        );
+    });
+
+    // For debugging
+    console.log(`Found ${nextButtons.length} potential next buttons`);
+    nextButtons.forEach((btn, i) => {
+        console.log(`Button ${i}: ${btn.outerHTML.substring(0, 100)}`);
     });
 
     if (nextButtons.length > 0) {
+        // Click the most likely next button (first one found)
         nextButtons[0].click();
         return;
     }
 
-    // 2. Try common keyboard shortcuts for next track
-    const shortcuts = [
-        { key: 'MediaTrackNext', code: 'MediaTrackNext' },
-        { key: 'MediaNextTrack', code: 'MediaNextTrack' },
-        { key: 'n', code: 'KeyN' },
-        { key: 'ArrowRight', code: 'ArrowRight', shiftKey: true },
-        { key: 'Right', code: 'ArrowRight', shiftKey: true }
+    // 3. Try keyboard shortcuts specifically suited for YouTube
+    const youtubeKeyboardShortcuts = [
+        { key: 'n', code: 'KeyN' }, // YouTube next shortcut
+        { key: '.', code: 'Period' }, // YouTube frame-by-frame forward
+        { key: 'SHIFT+n', code: 'KeyN', shiftKey: true }  // YouTube next video
     ];
 
-    for (const shortcut of shortcuts) {
-        const event = new KeyboardEvent('keydown', {
+    for (const shortcut of youtubeKeyboardShortcuts) {
+        const downEvent = new KeyboardEvent('keydown', {
             key: shortcut.key,
             code: shortcut.code,
             shiftKey: !!shortcut.shiftKey,
             bubbles: true,
             cancelable: true
         });
-        document.dispatchEvent(event);
+        document.dispatchEvent(downEvent);
+
+        // Send keyup event immediately after
+        const upEvent = new KeyboardEvent('keyup', {
+            key: shortcut.key,
+            code: shortcut.code,
+            shiftKey: !!shortcut.shiftKey,
+            bubbles: true,
+            cancelable: true
+        });
+        document.dispatchEvent(upEvent);
+    }
+
+    // 4. Try site-specific selectors for popular streaming services
+    const siteSpecificSelectors = [
+        'button[aria-label*="Next"]',
+        'button[data-testid="control-button-skip-forward"]',
+        '.ytp-next-button',
+        '[data-test="next-button"]',
+        '.next-button',
+        '.nextButton',
+        '.player-controls__btn--next'
+    ];
+
+    for (const selector of siteSpecificSelectors) {
+        const button = document.querySelector(selector);
+        if (button) {
+            button.click();
+            return;
+        }
+    }
+
+    // 5. Try common keyboard shortcuts as last resort
+    const shortcuts = [
+        { key: 'MediaTrackNext', code: 'MediaTrackNext' },
+        { key: 'MediaNextTrack', code: 'MediaNextTrack' },
+        { key: 'n', code: 'KeyN' },
+        { key: 'ArrowRight', code: 'ArrowRight', shiftKey: true },
+        { key: 'Right', code: 'ArrowRight', shiftKey: true },
+        { key: 'ArrowRight', code: 'ArrowRight', ctrlKey: true }
+    ];
+
+    // Send both keydown and keyup events for better simulation
+    for (const shortcut of shortcuts) {
+        const downEvent = new KeyboardEvent('keydown', {
+            key: shortcut.key,
+            code: shortcut.code,
+            shiftKey: !!shortcut.shiftKey,
+            ctrlKey: !!shortcut.ctrlKey,
+            bubbles: true,
+            cancelable: true
+        });
+
+        document.dispatchEvent(downEvent);
+
+        // Send keyup event after a slight delay
+        setTimeout(() => {
+            const upEvent = new KeyboardEvent('keyup', {
+                key: shortcut.key,
+                code: shortcut.code,
+                shiftKey: !!shortcut.shiftKey,
+                ctrlKey: !!shortcut.ctrlKey,
+                bubbles: true,
+                cancelable: true
+            });
+            document.dispatchEvent(upEvent);
+        }, 10);
+    }
+}
+
+function getYouTubeInfo() {
+    try {
+        // Extract channel name
+        let channel = '';
+        const channelElement = document.querySelector('ytd-video-owner-renderer a.yt-simple-endpoint');
+        if (channelElement) {
+            channel = channelElement.textContent.trim();
+        } else {
+            // Fallback to meta tag
+            const metaChannel = document.querySelector('meta[name="author"]');
+            if (metaChannel) {
+                channel = metaChannel.getAttribute('content') || '';
+            }
+        }
+
+        // Extract thumbnail URL
+        let thumbnail = '';
+        const metaThumbnail = document.querySelector('meta[property="og:image"]');
+        if (metaThumbnail) {
+            thumbnail = metaThumbnail.getAttribute('content') || '';
+        } else {
+            // Fallback to constructing thumbnail URL from video ID
+            const url = window.location.href;
+            const videoIdMatch = url.match(/[?&]v=([^&]+)/);
+            if (videoIdMatch && videoIdMatch[1]) {
+                thumbnail = `https://img.youtube.com/vi/${videoIdMatch[1]}/default.jpg`;
+            }
+        }
+
+        chrome.runtime.sendMessage({
+            action: 'youtubeInfo',
+            channel: channel,
+            thumbnail: thumbnail
+        });
+    } catch (error) {
+        console.error('Error in getYouTubeInfo:', error);
+        chrome.runtime.sendMessage({
+            action: 'youtubeInfo',
+            channel: '',
+            thumbnail: ''
+        });
+    }
+}
+
+function toggleMute(muted) {
+    const media = document.querySelector('audio, video');
+    if (media) {
+        media.muted = muted;
     }
 }

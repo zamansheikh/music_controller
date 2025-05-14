@@ -8,19 +8,55 @@
         body {
             width: 300px;
             font-family: 'Roboto', sans-serif;
-            background: linear-gradient(135deg, #6e8efb, #a777e3);
-            color: #fff;
-            padding: 15px;
+            background: linear-gradient(135deg, #ffccbc, #f8bbd0);
+            color: #333;
+            padding: 10px;
             margin: 0;
             border-radius: 10px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .media-info {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        #thumbnail {
+            width: 48px;
+            height: 48px;
+            border-radius: 5px;
+            object-fit: cover;
+            display: none;
+        }
+
+        .text-info {
+            flex: 1;
+            overflow: hidden;
         }
 
         #status {
             font-size: 14px;
             font-weight: 500;
-            margin-bottom: 15px;
-            text-align: center;
+            margin: 0;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            overflow: hidden;
+        }
+
+        #channel {
+            font-size: 12px;
+            color: #666;
+            margin: 0;
             text-overflow: ellipsis;
             white-space: nowrap;
             overflow: hidden;
@@ -29,87 +65,93 @@
         #controls {
             display: none;
             flex-direction: column;
-            gap: 12px;
-            background: rgba(255, 255, 255, 0.1);
-            padding: 10px;
-            border-radius: 8px;
+            gap: 8px;
         }
 
         #time {
             font-size: 12px;
             text-align: center;
-            color: #e0e0e0;
+            color: #666;
+            margin: 0;
         }
 
         #seek {
             width: 100%;
-            appearance: none;
             -webkit-appearance: none;
-            height: 6px;
+            height: 4px;
             border-radius: 5px;
-            background: #ffffff;
+            background: #ddd;
             outline: none;
             transition: background 0.3s;
         }
 
         #seek::-webkit-slider-thumb {
             -webkit-appearance: none;
-            width: 16px;
-            height: 16px;
+            width: 12px;
+            height: 12px;
             border-radius: 50%;
-            background: #ff6b6b;
+            background: #f06292;
             cursor: pointer;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+        }
+
+        #seek::-moz-range-thumb {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #f06292;
+            cursor: pointer;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
         }
 
         .button-group {
             display: flex;
-            gap: 8px;
             justify-content: center;
+            gap: 15px;
         }
 
         button {
-            padding: 8px;
-            font-size: 14px;
-            font-weight: 500;
-            color: #fff;
-            background: #ff6b6b;
+            background: none;
             border: none;
-            border-radius: 5px;
             cursor: pointer;
-            transition: background 0.3s, transform 0.1s;
-            flex: 1;
+            padding: 5px;
+            transition: opacity 0.3s, transform 0.1s;
         }
 
         button:hover {
-            background: #ff8787;
+            opacity: 0.8;
         }
 
         button:active {
             transform: scale(0.95);
         }
 
-        #prevTrack,
-        #nextTrack {
-            background: #6b7280;
-        }
-
-        #prevTrack:hover,
-        #nextTrack:hover {
-            background: #9ca3af;
+        button img {
+            width: 18px;
+            height: 18px;
+            vertical-align: middle;
         }
     </style>
 </head>
 
 <body>
-    <div id="status">No music detected</div>
-    <div id="controls">
-        <div id="time">0:00 / 0:00</div>
-        <input type="range" id="seek" min="0" max="100" value="0">
-        <div class="button-group">
-            <button id="prevTrack">Previous</button>
-            <button id="playPause">Play</button>
-            <button id="nextTrack">Next</button>
+    <div class="container">
+        <div class="media-info">
+            <img id="thumbnail" src="" alt="Video Thumbnail">
+            <div class="text-info">
+                <div id="status">No music detected</div>
+                <div id="channel"></div>
+            </div>
+        </div>
+        <div id="controls">
+            <div id="time">0:00 / 0:00</div>
+            <input type="range" id="seek" min="0" max="100" value="0">
+            <div class="button-group">
+                <button id="prevTrack" title="Previous"><img src="prev.svg" alt="Previous"></button>
+                <button id="playPause" title="Play/Pause"><img src="play.svg" alt="Play"></button>
+                <button id="nextTrack" title="Next"><img src="next.svg" alt="Next"></button>
+                <button id="mute" title="Mute"><img src="mute.svg" alt="Mute"></button>
+            </div>
         </div>
     </div>
     <script src="popup.js"></script>

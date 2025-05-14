@@ -1,29 +1,51 @@
 document.addEventListener('DOMContentLoaded', () => {
   const statusDiv = document.getElementById('status');
+  const channelDiv = document.getElementById('channel');
+  const thumbnailImg = document.getElementById('thumbnail');
   const controlsDiv = document.getElementById('controls');
   const playPauseBtn = document.getElementById('playPause');
   const prevTrackBtn = document.getElementById('prevTrack');
   const nextTrackBtn = document.getElementById('nextTrack');
+  const muteBtn = document.getElementById('mute');
   const seekSlider = document.getElementById('seek');
   const timeDiv = document.getElementById('time');
   let tabId = null;
   let duration = 0;
+  let isMuted = false;
 
   // Function to update audible tab
   function updateAudibleTab() {
     chrome.runtime.sendMessage({ action: 'getAudibleTabs' }, (response) => {
       if (response && response.tabs && response.tabs.length > 0) {
         tabId = response.tabs[0].id;
-        statusDiv.textContent = `Playing: ${response.tabs[0].title.slice(0, 30)}${response.tabs[0].title.length > 30 ? '...' : ''}`;
+        const tab = response.tabs[0];
+        statusDiv.textContent = `Playing: ${tab.title.slice(0, 30)}${tab.title.length > 30 ? '...' : ''}`;
         controlsDiv.style.display = 'flex';
+
+        // Check if the tab is a YouTube video and request channel/thumbnail info
+        if (tab.url.includes('youtube.com/watch')) {
+          chrome.runtime.sendMessage({ action: 'getYouTubeInfo', tabId });
+        } else {
+          // Clear channel and thumbnail for non-YouTube tabs
+          channelDiv.textContent = '';
+          thumbnailImg.src = '';
+          thumbnailImg.style.display = 'none';
+        }
+
         // Request media info
         chrome.runtime.sendMessage({ action: 'getMediaInfo', tabId });
       } else {
         tabId = null;
         statusDiv.textContent = 'No music detected';
+        channelDiv.textContent = '';
+        thumbnailImg.src = '';
+        thumbnailImg.style.display = 'none';
         controlsDiv.style.display = 'none';
         timeDiv.textContent = '0:00 / 0:00';
         seekSlider.value = 0;
+        playPauseBtn.textContent = '▶️'; // Reset to play icon
+        muteBtn.textContent = '🔊'; // Reset to unmute icon
+        isMuted = false;
       }
     });
   }
@@ -34,7 +56,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Poll for audible tabs every 1 second
   setInterval(updateAudibleTab, 1000);
 
-  // Listen for messages from background (e.g., active tab change)
+  // Listen for messages from background (e.g., active tab change, YouTube info, media info)
   chrome.runtime.onMessage.addListener((message) => {
     if (message.action === 'updateAudibleTab') {
       updateAudibleTab();
@@ -43,7 +65,18 @@ document.addEventListener('DOMContentLoaded', () => {
       seekSlider.max = duration;
       seekSlider.value = message.currentTime || 0;
       timeDiv.textContent = `${formatTime(message.currentTime || 0)} / ${formatTime(duration)}`;
-      playPauseBtn.textContent = message.paused ? 'Play' : 'Pause';
+      playPauseBtn.textContent = message.paused ? '▶️' : '⏸️'; // Dynamic play/pause icon
+      muteBtn.textContent = isMuted ? '🔇' : '🔊'; // Dynamic mute/unmute icon
+    } else if (message.action === 'youtubeInfo') {
+      // Update channel name and thumbnail
+      channelDiv.textContent = message.channel || '';
+      if (message.thumbnail) {
+        thumbnailImg.src = message.thumbnail;
+        thumbnailImg.style.display = 'block';
+      } else {
+        thumbnailImg.src = '';
+        thumbnailImg.style.display = 'none';
+      }
     }
   });
 
@@ -65,6 +98,15 @@ document.addEventListener('DOMContentLoaded', () => {
   nextTrackBtn.addEventListener('click', () => {
     if (tabId) {
       chrome.runtime.sendMessage({ action: 'nextTrack', tabId });
+    }
+  });
+
+  // Mute button
+  muteBtn.addEventListener('click', () => {
+    if (tabId) {
+      isMuted = !isMuted;
+      muteBtn.textContent = isMuted ? '🔇' : '🔊'; // Toggle mute/unmute icon
+      chrome.runtime.sendMessage({ action: 'toggleMute', tabId, muted: isMuted });
     }
   });
 
