@@ -14,16 +14,16 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      height: 170px;
+      height: auto;
     }
 
     .player-container {
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 12px;
       background: linear-gradient(90deg, #fdf3e7, #ffc9b9, #fdf3e7);
-      border-radius: 10px;
-      padding: 10px 10px;
+      border-radius: 12px;
+      padding: 12px 12px;
       width: 100%;
       box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
     }
@@ -177,9 +177,9 @@
       <div class="progress-container">
         <div class="progress-row">
           <span id="current-time">0:00</span>
-          <span id="total-time">3:15</span>
+          <span id="total-time">0:00</span>
         </div>
-        <input type="range" id="seek" min="0" max="100" value="0">
+        <input type="range" id="seek" min="0" max="100" value="50">
       </div>
     </div>
     <div class="button-group">
