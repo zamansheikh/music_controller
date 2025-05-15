@@ -29,7 +29,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Retrieve last saved media info
   chrome.runtime.sendMessage({ action: 'getLastMediaInfo' }, (lastMediaInfo) => {
     if (lastMediaInfo && lastMediaInfo.title) {
-      titleDiv.textContent = `Paused: ${lastMediaInfo.title.slice(0, 20)}${lastMediaInfo.title.length > 20 ? '...' : ''}`;
+      titleDiv.textContent = `Paused: ${lastMediaInfo.title.slice(4, 20)}${lastMediaInfo.title.length > 20 ? '...' : ''}`;
       channelDiv.textContent = lastMediaInfo.channel || 'Unknown Channel';
       if (lastMediaInfo.thumbnail) {
         thumbnailImg.src = lastMediaInfo.thumbnail;
