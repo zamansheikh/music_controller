@@ -223,6 +223,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
+  // Add an event listener to dynamically update the seek bar's background gradient
+  seekSlider.addEventListener('input', () => {
+    const value = (seekSlider.value / seekSlider.max) * 100;
+    seekSlider.style.background = `linear-gradient(to right, #FF245A ${value}%, #df8c8c ${value}%)`;
+  });
+
   function formatTime(seconds) {
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
