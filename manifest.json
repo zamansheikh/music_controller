@@ -2,7 +2,8 @@
   "manifest_version": 3,
   "name": "Music Controller",
   "version": "1.0",
-  "description": "Control and seek music playing in any Chrome tab from a popup.",
+  "description": "Control and seek music playing in any Chrome tab from a popup. Supports Spotify, YouTube, and Apple Music.",
+  "homepage_url": "https://zamansheikh.com",
   "permissions": [
     "tabs",
     "activeTab",
