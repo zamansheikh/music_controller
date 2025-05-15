@@ -140,7 +140,8 @@ document.addEventListener('DOMContentLoaded', () => {
       updatePlayPauseIcon(message.paused);
       updateMuteIcon(isMuted);
       titleDiv.textContent = `${message.paused ? 'Paused' : 'Playing'}: ${message.title.slice(4, 20)}${message.title.length > 20 ? '...' : ''}`;
-
+      const value = (seekSlider.value / seekSlider.max) * 100;
+      seekSlider.style.background = `linear-gradient(to right, #FF245A ${value}%, #df8c8c ${value}%)`;
       // Ensure channel name is updated properly in the mediaInfo handler
       if (message.channel) {
         channelDiv.textContent = message.channel;
@@ -168,9 +169,12 @@ document.addEventListener('DOMContentLoaded', () => {
             if (newTime <= duration) {
               seekSlider.value = newTime;
               currentTimeDiv.textContent = formatTime(newTime);
+              const value = (newTime / seekSlider.max) * 100;
+              seekSlider.style.background = `linear-gradient(to right, #FF245A ${value}%, #df8c8c ${value}%)`;
             } else {
               clearInterval(updateTimeInterval);
               updateTimeInterval = null;
+
             }
           }, 1000);
         }
@@ -221,6 +225,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (tabId) {
       chrome.runtime.sendMessage({ action: 'seek', tabId, time: seekSlider.value });
     }
+    const value = (seekSlider.value / seekSlider.max) * 100;
+    seekSlider.style.background = `linear-gradient(to right, #FF245A ${value}%, #df8c8c ${value}%)`;
   });
 
   // Add an event listener to dynamically update the seek bar's background gradient
