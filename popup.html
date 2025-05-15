@@ -8,14 +8,14 @@
         body {
             width: 320px;
             font-family: 'Roboto', sans-serif;
-            background: linear-gradient(135deg, #f8bbd0, #ffccbc);
+            background: linear-gradient(135deg, #FFFF24, #FF245A);
             color: #333;
             padding: 15px;
             margin: 0;
-            border-radius: 15px;
+            border-radius: 30px;
             box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
+            backdrop-filter: blur(10px) brightness(1.96);
+            -webkit-backdrop-filter: blur(10px) brightness(1.96);
             background-color: rgba(255, 255, 255, 0.3);
         }
 
@@ -95,7 +95,7 @@
             width: 14px;
             height: 14px;
             border-radius: 50%;
-            background: #f06292;
+            background: #FF245A;
             cursor: pointer;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
         }
@@ -104,7 +104,7 @@
             width: 14px;
             height: 14px;
             border-radius: 50%;
-            background: #f06292;
+            background: #FF245A;
             cursor: pointer;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
         }
@@ -145,14 +145,17 @@
 <body>
     <div class="container">
         <div class="media-info">
-            <img id="thumbnail" src="" alt="Video Thumbnail">
+            <img id="thumbnail" src="default-thumbnail.png" alt="Video Thumbnail">
             <div class="text-info">
                 <div id="video-title">No music detected</div>
-                <div id="channel"></div>
+                <div id="channel">No channel detected</div>
             </div>
         </div>
         <div id="controls">
-            <div id="time">0:00 / 0:00</div>
+            <div id="time" style="display: flex; justify-content: space-between; width: 100%;">
+                <span id="current-time">0:00</span>
+                <span id="total-time">0:00</span>
+            </div>
             <input type="range" id="seek" min="0" max="100" value="0">
             <div class="button-group">
                 <button id="prevTrack" title="Previous"><img src="prev.svg" alt="Previous"></button>
