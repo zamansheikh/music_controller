@@ -51,7 +51,7 @@ document.addEventListener('DOMContentLoaded', () => {
         chrome.runtime.sendMessage({ action: 'getMediaInfo', tabId }, (mediaInfo) => {
           channelDiv.textContent = mediaInfo.channel || 'Unknown Channel';
         });
-        titleDiv.textContent = `Playing: ${tab.title.slice(0, 20)}${tab.title.length > 20 ? '...' : ''}`;
+        titleDiv.textContent = `Playing: ${tab.title.slice(4, 20)}${tab.title.length > 20 ? '...' : ''}`;
         channelDiv.textContent = mediaInfo.channel || 'Unknown Channel';
         controlsDiv.style.display = 'flex';
 
@@ -71,7 +71,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // If no audible tabs are found but a tabId exists, retain the last state
         chrome.runtime.sendMessage({ action: 'getMediaInfo', tabId }, (mediaInfo) => {
           if (mediaInfo && mediaInfo.title) {
-            titleDiv.textContent = `${mediaInfo.paused ? 'Paused' : 'Playing'}: ${mediaInfo.title.slice(0, 20)}${mediaInfo.title.length > 20 ? '...' : ''}`;
+            titleDiv.textContent = `${mediaInfo.paused ? 'Paused' : 'Playing'}: ${mediaInfo.title.slice(4, 20)}${mediaInfo.title.length > 20 ? '...' : ''}`;
             channelDiv.textContent = mediaInfo.channel || 'Unknown Channel';
             if (mediaInfo.thumbnail) {
               thumbnailImg.src = mediaInfo.thumbnail;
@@ -139,7 +139,7 @@ document.addEventListener('DOMContentLoaded', () => {
       totalTimeDiv.textContent = formatTime(duration);
       updatePlayPauseIcon(message.paused);
       updateMuteIcon(isMuted);
-      titleDiv.textContent = `${message.paused ? 'Paused' : 'Playing'}: ${message.title.slice(0, 20)}${message.title.length > 20 ? '...' : ''}`;
+      titleDiv.textContent = `${message.paused ? 'Paused' : 'Playing'}: ${message.title.slice(4, 20)}${message.title.length > 20 ? '...' : ''}`;
 
       // Ensure channel name is updated properly in the mediaInfo handler
       if (message.channel) {
