@@ -2,170 +2,201 @@
 <html>
 
 <head>
-    <title>Music Controller</title>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
-    <style>
-        body {
-            width: 320px;
-            font-family: 'Roboto', sans-serif;
-            background: linear-gradient(135deg, #FFFF24, #FF245A);
-            color: #333;
-            padding: 15px;
-            margin: 0;
-            border-radius: 30px;
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
-            backdrop-filter: blur(10px) brightness(1.96);
-            -webkit-backdrop-filter: blur(10px) brightness(1.96);
-            background-color: rgba(255, 255, 255, 0.3);
-        }
+  <title>Music Controller</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    body {
+      width: 300px;
+      margin: 0;
+      padding: 0;
+      font-family: "Segoe UI", sans-serif;
+      background: #1c1c1c;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 170px;
+    }
 
-        .container {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
+    .player-container {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      background: linear-gradient(90deg, #fdf3e7, #ffc9b9, #fdf3e7);
+      border-radius: 10px;
+      padding: 10px 10px;
+      width: 100%;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    }
 
-        .media-info {
-            display: flex;
-            gap: 12px;
-            align-items: center;
-            background: rgba(255, 255, 255, 0.5);
-            padding: 10px;
-            border-radius: 10px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-        }
+    .player {
+      padding: 10px;
+      background: linear-gradient(90deg, #fdf3e7, #ffc9b9, #fdf3e7);
+      box-shadow: 0 2px 3px rgba(83, 60, 60, 0.2);
+      border: 2px solid #fdf3e7;
+      /* Use transparent to allow background gradient to mimic border */
+      border-radius: 10px;
+      background-clip: padding-box;
+      /* Ensures background respects border-radius */
+      position: relative;
+      overflow: hidden;
+    }
 
-        #thumbnail {
-            width: 64px;
-            height: 64px;
-            border-radius: 10px;
-            object-fit: cover;
-        }
+    .top-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
 
-        .text-info {
-            flex: 1;
-            overflow: hidden;
-        }
+    .album-cover {
+      width: 50px;
+      height: 50px;
+      border-radius: 10px;
+      object-fit: cover;
+    }
 
-        #video-title {
-            font-size: 16px;
-            font-weight: 500;
-            margin: 0;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-            overflow: hidden;
-        }
+    .track-info {
+      display: flex;
+      flex-direction: column;
+    }
 
-        #channel {
-            font-size: 14px;
-            color: #555;
-            margin: 0;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-            overflow: hidden;
-        }
+    .track-title {
+      font-size: 1rem;
+      font-weight: bold;
+      color: #333;
+    }
 
-        #controls {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            align-items: center;
-        }
+    .channel-name {
+      color: #666;
+      font-size: .8rem;
+    }
 
-        #time {
-            font-size: 14px;
-            text-align: center;
-            color: #555;
-            margin: 0;
-        }
+    .progress-container {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 10px;
+    }
 
-        #seek {
-            width: 100%;
-            appearance: none;
-            -webkit-appearance: none;
-            height: 6px;
-            border-radius: 5px;
-            background: #ddd;
-            outline: none;
-            transition: background 0.3s;
-        }
+    .progress-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: .8rem;
+    }
 
-        #seek::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            width: 14px;
-            height: 14px;
-            border-radius: 50%;
-            background: #FF245A;
-            cursor: pointer;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-        }
+    .progress-bar {
+      height: 5px;
+      border-radius: 999px;
+      background: #fff;
+      margin-top: 0;
+      overflow: hidden;
+    }
 
-        #seek::-moz-range-thumb {
-            width: 14px;
-            height: 14px;
-            border-radius: 50%;
-            background: #FF245A;
-            cursor: pointer;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-        }
+    .progress-fill {
+      width: 50%;
+      height: 100%;
+      background: #ff005c;
+      border-radius: 999px;
+    }
 
-        .button-group {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            /* justify-content: space-around; */
-            gap: 16px;
-            width: 100%;
-        }
+    #seek {
+      width: 100%;
+      appearance: none;
+      -webkit-appearance: none;
+      height: 6px;
+      border-radius: 5px;
+      background: #ddd;
+      outline: none;
+      transition: background 0.3s;
+    }
 
-        button {
-            background: none;
-            border: none;
-            cursor: pointer;
-            padding: 10px;
-            transition: opacity 0.3s, transform 0.1s;
-        }
+    #seek::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #FF245A;
+      cursor: pointer;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    }
 
-        button:hover {
-            opacity: 0.8;
-        }
+    #seek::-moz-range-thumb {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #FF245A;
+      cursor: pointer;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    }
 
-        button:active {
-            transform: scale(0.9);
-        }
+    .button-group {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 16px;
+      width: 100%;
+    }
 
-        button img {
-            width: 24px;
-            height: 24px;
-            vertical-align: middle;
-        }
-    </style>
+    button {
+      background: none;
+      border: none;
+      cursor: pointer;
+      transition: opacity 0.3s, transform 0.1s;
+    }
+
+    button:hover {
+      opacity: 0.8;
+    }
+
+    button:active {
+      transform: scale(0.9);
+    }
+
+    button img {
+      width: 16px;
+      height: 16px;
+      vertical-align: middle;
+    }
+  </style>
+
+  <!-- Icons CDN (FontAwesome for demo) -->
+  <script src="popup.js"></script>
 </head>
 
 <body>
-    <div class="container">
-        <div class="media-info">
-            <img id="thumbnail" src="default-thumbnail.png" alt="Video Thumbnail">
-            <div class="text-info">
-                <div id="video-title">No music detected</div>
-                <div id="channel">No channel detected</div>
-            </div>
+  <div class="player-container">
+    <div class="player">
+      <div class="top-row">
+        <img id="thumbnail" src="./ThumbnailPoster.png" class="album-cover" alt="Album Art" />
+        <div class="track-info">
+          <div id="video-title" class="track-title">Youtube video title</div>
+          <div id="channel" class="channel-name">Youtube channel Name</div>
         </div>
-        <div id="controls">
-            <div id="time" style="display: flex; justify-content: space-between; width: 100%;">
-                <span id="current-time">0:00</span>
-                <span id="total-time">0:00</span>
-            </div>
-            <input type="range" id="seek" min="0" max="100" value="0">
-            <div class="button-group">
-                <button id="prevTrack" title="Previous"><img src="prev.svg" alt="Previous"></button>
-                <button id="playPause" title="Play/Pause"><img src="play.svg" alt="Play"></button>
-                <button id="nextTrack" title="Next"><img src="next.svg" alt="Next"></button>
-                <button id="mute" title="Mute/Unmute"><img src="mute.svg" alt="Mute"></button>
-            </div>
+      </div>
+
+      <div class="progress-container">
+        <div class="progress-row">
+          <span id="current-time">0:00</span>
+          <span id="total-time">3:15</span>
         </div>
+        <input type="range" id="seek" min="0" max="100" value="0">
+      </div>
     </div>
-    <script src="popup.js"></script>
+    <div class="button-group">
+      <button id="prevTrack" title="Previous">
+        <img src="./RewindBack.svg" alt="Previous" />
+      </button>
+      <button id="playPause" title="Play/Pause">
+        <img src="./Polygon.svg" alt="Play" />
+      </button>
+      <button id="nextTrack" title="Next">
+        <img src="./RewindForward.svg" alt="Next" />
+      </button>
+      <button id="mute" title="Mute/Unmute">
+        <img src="./SoundOff.svg" alt="Mute" />
+      </button>
+    </div>
+  </div>
 </body>
 
 </html>

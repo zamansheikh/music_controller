@@ -10,9 +10,12 @@ document.addEventListener('DOMContentLoaded', () => {
   const seekSlider = document.getElementById('seek');
   const currentTimeDiv = document.getElementById('current-time');
   const totalTimeDiv = document.getElementById('total-time');
+
+
   let tabId = null;
   let duration = 0;
   let isMuted = false;
+  let updateTimeInterval = null; // Interval for updating current time dynamically
 
   chrome.runtime.sendMessage({ action: 'getLastPlayingTab' }, (response) => {
     if (response && response.tabId) {
@@ -26,14 +29,14 @@ document.addEventListener('DOMContentLoaded', () => {
   // Retrieve last saved media info
   chrome.runtime.sendMessage({ action: 'getLastMediaInfo' }, (lastMediaInfo) => {
     if (lastMediaInfo && lastMediaInfo.title) {
-      titleDiv.textContent = `Paused: ${lastMediaInfo.title}`;
+      titleDiv.textContent = `Paused: ${lastMediaInfo.title.slice(0, 20)}${lastMediaInfo.title.length > 20 ? '...' : ''}`;
       channelDiv.textContent = lastMediaInfo.channel || 'Unknown Channel';
       if (lastMediaInfo.thumbnail) {
         thumbnailImg.src = lastMediaInfo.thumbnail;
         thumbnailImg.style.display = 'block';
       } else {
-        thumbnailImg.src = '';
-        thumbnailImg.style.display = 'none';
+        thumbnailImg.src = './ThumbnailPoster.png';
+        thumbnailImg.style.display = 'flex';
       }
       controlsDiv.style.display = 'flex';
     }
@@ -45,8 +48,11 @@ document.addEventListener('DOMContentLoaded', () => {
       if (response && response.tabs && response.tabs.length > 0) {
         tabId = response.tabs[0].id;
         const tab = response.tabs[0];
-        titleDiv.textContent = `Playing: ${tab.title.slice(0, 30)}${tab.title.length > 30 ? '...' : ''}`;
-        channelDiv.textContent = tab.channel || ''; // Here I assume channel info is in the tab object
+        chrome.runtime.sendMessage({ action: 'getMediaInfo', tabId }, (mediaInfo) => {
+          channelDiv.textContent = mediaInfo.channel || 'Unknown Channel';
+        });
+        titleDiv.textContent = `Playing: ${tab.title.slice(0, 20)}${tab.title.length > 20 ? '...' : ''}`;
+        channelDiv.textContent = mediaInfo.channel || 'Unknown Channel';
         controlsDiv.style.display = 'flex';
 
         // Check if the tab is a YouTube video and request channel/thumbnail info
@@ -54,9 +60,9 @@ document.addEventListener('DOMContentLoaded', () => {
           chrome.runtime.sendMessage({ action: 'getYouTubeInfo', tabId });
         } else {
           // Clear channel and thumbnail for non-YouTube tabs
-          channelDiv.textContent = '';
-          thumbnailImg.src = '';
-          thumbnailImg.style.display = 'none';
+          channelDiv.textContent = mediaInfo.channel || 'Unknown Channel';
+          thumbnailImg.src = './ThumbnailPoster.png';
+          thumbnailImg.style.display = 'flex';
         }
 
         // Request media info
@@ -65,14 +71,14 @@ document.addEventListener('DOMContentLoaded', () => {
         // If no audible tabs are found but a tabId exists, retain the last state
         chrome.runtime.sendMessage({ action: 'getMediaInfo', tabId }, (mediaInfo) => {
           if (mediaInfo && mediaInfo.title) {
-            titleDiv.textContent = `${mediaInfo.paused ? 'Paused' : 'Playing'}: ${mediaInfo.title}`;
+            titleDiv.textContent = `${mediaInfo.paused ? 'Paused' : 'Playing'}: ${mediaInfo.title.slice(0, 20)}${mediaInfo.title.length > 20 ? '...' : ''}`;
             channelDiv.textContent = mediaInfo.channel || 'Unknown Channel';
             if (mediaInfo.thumbnail) {
               thumbnailImg.src = mediaInfo.thumbnail;
               thumbnailImg.style.display = 'block';
             } else {
-              thumbnailImg.src = '';
-              thumbnailImg.style.display = 'none';
+              thumbnailImg.src = './ThumbnailPoster.png';
+              thumbnailImg.style.display = 'flex';
             }
           } else {
             titleDiv.textContent = 'No music detected';
@@ -84,8 +90,8 @@ document.addEventListener('DOMContentLoaded', () => {
         tabId = null;
         titleDiv.textContent = 'No music detected';
         channelDiv.textContent = 'Unknown Channel';
-        thumbnailImg.src = 'default-thumbnail.png';
-        thumbnailImg.style.display = 'none';
+        thumbnailImg.src = './ThumbnailPoster.png';
+        thumbnailImg.style.display = 'flex';
         controlsDiv.style.display = 'none';
         currentTimeDiv.textContent = '0:00';
         totalTimeDiv.textContent = '0:00';
@@ -133,23 +139,50 @@ document.addEventListener('DOMContentLoaded', () => {
       totalTimeDiv.textContent = formatTime(duration);
       updatePlayPauseIcon(message.paused);
       updateMuteIcon(isMuted);
-      titleDiv.textContent = `${message.paused ? 'Paused' : 'Playing'}: ${message.title}`;
+      titleDiv.textContent = `${message.paused ? 'Paused' : 'Playing'}: ${message.title.slice(0, 20)}${message.title.length > 20 ? '...' : ''}`;
+
+      // Ensure channel name is updated properly in the mediaInfo handler
+      if (message.channel) {
+        channelDiv.textContent = message.channel;
+      } else {
+        channelDiv.textContent = 'Unknown Channel';
+      }
+
+      if (message.thumbnail) {
+        thumbnailImg.src = message.thumbnail;
+        thumbnailImg.style.display = 'block';
+      } else {
+        thumbnailImg.src = './ThumbnailPoster.png';
+        thumbnailImg.style.display = 'none';
+      }
+
+      // Clear any existing interval if paused
+      if (message.paused) {
+        clearInterval(updateTimeInterval);
+        updateTimeInterval = null;
+      } else {
+        // Start interval to update current time dynamically
+        if (!updateTimeInterval) {
+          updateTimeInterval = setInterval(() => {
+            const newTime = parseFloat(seekSlider.value) + 1; // Increment by 1 second
+            if (newTime <= duration) {
+              seekSlider.value = newTime;
+              currentTimeDiv.textContent = formatTime(newTime);
+            } else {
+              clearInterval(updateTimeInterval);
+              updateTimeInterval = null;
+            }
+          }, 1000);
+        }
+      }
+    } else if (message.action === 'youtubeInfo') {
+      // Update channel name and thumbnail
       channelDiv.textContent = message.channel || 'Unknown Channel';
       if (message.thumbnail) {
         thumbnailImg.src = message.thumbnail;
         thumbnailImg.style.display = 'block';
       } else {
-        thumbnailImg.src = '';
-        thumbnailImg.style.display = 'none';
-      }
-    } else if (message.action === 'youtubeInfo') {
-      // Update channel name and thumbnail
-      channelDiv.textContent = message.channel || '';
-      if (message.thumbnail) {
-        thumbnailImg.src = message.thumbnail;
-        thumbnailImg.style.display = 'block';
-      } else {
-        thumbnailImg.src = '';
+        thumbnailImg.src = './ThumbnailPoster.png';
         thumbnailImg.style.display = 'none';
       }
     }
