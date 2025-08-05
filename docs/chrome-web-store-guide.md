@@ -13,22 +13,7 @@ Control YouTube media playback (play, pause, next, previous, mute, seek) directl
 
 ## Permission Justifications
 
-### 1. `tabs` Permission Justification
-
-**What to write in the "tabs justification" field:**
-
-```
-The "tabs" permission is required to:
-- Detect which browser tabs are currently playing audio or video content
-- Retrieve tab titles to display the current video/media name in the extension popup
-- Identify YouTube video URLs to extract video IDs for proper media control
-- Query audible tabs to determine which tab contains the active media player
-- Switch focus to media-playing tabs when users click on media controls
-
-This permission is essential for the core functionality of providing unified media controls across different tabs without requiring users to manually switch between tabs.
-```
-
-### 2. `activeTab` Permission Justification
+### 1. `activeTab` Permission Justification
 
 **What to write in the "activeTab justification" field:**
 
@@ -43,7 +28,7 @@ The "activeTab" permission is required to:
 This permission ensures the extension can interact with media players on the user's currently focused tab to provide real-time control and information display.
 ```
 
-### 3. `scripting` Permission Justification
+### 2. `scripting` Permission Justification
 
 **What to write in the "scripting justification" field:**
 
@@ -59,7 +44,7 @@ The "scripting" permission is required to:
 This permission is fundamental to the extension's ability to bridge communication between the browser extension interface and media players embedded in web pages.
 ```
 
-### 4. Host Permission Justification
+### 3. Host Permission Justification
 
 **What to write in the "Host permission justification" field:**
 

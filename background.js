@@ -3,22 +3,43 @@ let lastMediaInfo = { title: '', channel: '', thumbnail: '' };
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.action === 'getAudibleTabs') {
-        chrome.tabs.query({ audible: true }, (tabs) => {
+        // Instead of querying all tabs, we'll work with the active tab
+        // The popup will handle finding audible tabs through content scripts
+        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
             if (tabs.length > 0) {
-                lastPlayingTabId = tabs[0].id; // Update the last playing tab
+                // Check if this tab has media playing
+                chrome.scripting.executeScript({
+                    target: { tabId: tabs[0].id },
+                    func: checkMediaPlaying
+                }, (results) => {
+                    if (results && results[0] && results[0].result) {
+                        lastPlayingTabId = tabs[0].id;
+                        sendResponse({ tabs: [tabs[0]] });
+                    } else {
+                        // No media playing in active tab, return empty
+                        sendResponse({ tabs: [] });
+                    }
+                });
+            } else {
+                sendResponse({ tabs: [] });
             }
-            sendResponse({ tabs });
         });
         return true; // Keep message channel open for async response
     } else if (message.action === 'getLastPlayingTab') {
-        sendResponse({ tabId: lastPlayingTabId }); // Return the last playing tab ID
+        sendResponse({ tabId: lastPlayingTabId });
+    } else if (message.action === 'registerMediaTab') {
+        // Content script can register itself as having media
+        if (sender.tab) {
+            lastPlayingTabId = sender.tab.id;
+            sendResponse({ success: true });
+        }
     } else if (message.action === 'getMediaInfo') {
         chrome.scripting.executeScript({
             target: { tabId: message.tabId },
             func: getMediaInfo
         });
     } else if (message.action === 'togglePlayPause') {
-        const targetTabId = message.tabId || lastPlayingTabId; // Use the last playing tab if no tabId is provided
+        const targetTabId = message.tabId || lastPlayingTabId;
         if (targetTabId) {
             chrome.scripting.executeScript({
                 target: { tabId: targetTabId },
@@ -64,17 +85,11 @@ chrome.runtime.onMessage.addListener((message, sender) => {
     }
 });
 
-// Listen for tab activation changes
-chrome.tabs.onActivated.addListener((activeInfo) => {
-    chrome.runtime.sendMessage({ action: 'updateAudibleTab' });
-});
-
-// Listen for tab updates (e.g., audible state changes)
-chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
-    if (changeInfo.audible !== undefined) {
-        chrome.runtime.sendMessage({ action: 'updateAudibleTab' });
-    }
-});
+// Function to check if media is playing (injected into pages)
+function checkMediaPlaying() {
+    const media = document.querySelector('audio, video');
+    return media && !media.paused && media.currentTime > 0;
+}
 
 // Update lastPlayingTabId when media info is received
 function getMediaInfo() {

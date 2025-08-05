@@ -48,19 +48,16 @@ document.addEventListener('DOMContentLoaded', () => {
       if (response && response.tabs && response.tabs.length > 0) {
         tabId = response.tabs[0].id;
         const tab = response.tabs[0];
-        chrome.runtime.sendMessage({ action: 'getMediaInfo', tabId }, (mediaInfo) => {
-          channelDiv.textContent = mediaInfo.channel || 'Unknown Channel';
-        });
+        
         titleDiv.textContent = `Playing: ${tab.title.slice(4, 20)}${tab.title.length > 20 ? '...' : ''}`;
-        channelDiv.textContent = mediaInfo.channel || 'Unknown Channel';
         controlsDiv.style.display = 'flex';
 
         // Check if the tab is a YouTube video and request channel/thumbnail info
-        if (tab.url.includes('youtube.com/watch')) {
+        if (tab.url && tab.url.includes('youtube.com/watch')) {
           chrome.runtime.sendMessage({ action: 'getYouTubeInfo', tabId });
         } else {
           // Clear channel and thumbnail for non-YouTube tabs
-          channelDiv.textContent = mediaInfo.channel || 'Unknown Channel';
+          channelDiv.textContent = 'Unknown Channel';
           thumbnailImg.src = './ThumbnailPoster.png';
           thumbnailImg.style.display = 'flex';
         }
@@ -68,41 +65,38 @@ document.addEventListener('DOMContentLoaded', () => {
         // Request media info
         chrome.runtime.sendMessage({ action: 'getMediaInfo', tabId });
       } else if (tabId) {
-        // If no audible tabs are found but a tabId exists, retain the last state
-        chrome.runtime.sendMessage({ action: 'getMediaInfo', tabId }, (mediaInfo) => {
-          if (mediaInfo && mediaInfo.title) {
-            titleDiv.textContent = `${mediaInfo.paused ? 'Paused' : 'Playing'}: ${mediaInfo.title.slice(4, 20)}${mediaInfo.title.length > 20 ? '...' : ''}`;
-            channelDiv.textContent = mediaInfo.channel || 'Unknown Channel';
-            if (mediaInfo.thumbnail) {
-              thumbnailImg.src = mediaInfo.thumbnail;
-              thumbnailImg.style.display = 'block';
-            } else {
-              thumbnailImg.src = './ThumbnailPoster.png';
-              thumbnailImg.style.display = 'flex';
-            }
-          } else {
-            titleDiv.textContent = 'No music detected';
-            channelDiv.textContent = 'Unknown Channel';
-          }
-        });
+        // If no audible tabs are found but a tabId exists, try to get info from last playing tab
+        chrome.runtime.sendMessage({ action: 'getMediaInfo', tabId });
         controlsDiv.style.display = 'flex';
       } else {
-        tabId = null;
-        titleDiv.textContent = 'No music detected';
-        channelDiv.textContent = 'Unknown Channel';
-        thumbnailImg.src = './ThumbnailPoster.png';
-        thumbnailImg.style.display = 'flex';
-        controlsDiv.style.display = 'none';
-        currentTimeDiv.textContent = '0:00';
-        totalTimeDiv.textContent = '0:00';
-        seekSlider.value = 0;
-        const playPauseImg = playPauseBtn.querySelector('img');
-        playPauseImg.src = 'play.svg';
-        playPauseImg.alt = 'Play';
-        const muteImg = muteBtn.querySelector('img');
-        muteImg.src = 'unmute.svg';
-        muteImg.alt = 'Unmute';
-        isMuted = false;
+        // Fallback: try to use the current active tab
+        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+          if (tabs.length > 0 && tabs[0].url && tabs[0].url.includes('youtube.com')) {
+            tabId = tabs[0].id;
+            titleDiv.textContent = `Tab: ${tabs[0].title.slice(0, 20)}${tabs[0].title.length > 20 ? '...' : ''}`;
+            controlsDiv.style.display = 'flex';
+            chrome.runtime.sendMessage({ action: 'getMediaInfo', tabId });
+            chrome.runtime.sendMessage({ action: 'getYouTubeInfo', tabId });
+          } else {
+            // No suitable tab found
+            tabId = null;
+            titleDiv.textContent = 'No music detected';
+            channelDiv.textContent = 'Unknown Channel';
+            thumbnailImg.src = './ThumbnailPoster.png';
+            thumbnailImg.style.display = 'flex';
+            controlsDiv.style.display = 'none';
+            currentTimeDiv.textContent = '0:00';
+            totalTimeDiv.textContent = '0:00';
+            seekSlider.value = 0;
+            const playPauseImg = playPauseBtn.querySelector('img');
+            playPauseImg.src = 'play.svg';
+            playPauseImg.alt = 'Play';
+            const muteImg = muteBtn.querySelector('img');
+            muteImg.src = 'unmute.svg';
+            muteImg.alt = 'Unmute';
+            isMuted = false;
+          }
+        });
       }
     });
   }
