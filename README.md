@@ -79,6 +79,9 @@ information, thumbnail image, and playback controls.
 - Ensure all required assets (e.g., SVG icons and `ThumbnailPoster.png`) are included in the extension folder.
 - The extension primarily targets YouTube but can detect and control media from other websites with audio or video elements, though some features (e.g., channel name, thumbnail) are YouTube-specific.
 
+## Build
+To build the extension package, run the `powershell -ExecutionPolicy Bypass -File create_package.ps1` script in PowerShell. This script will create a ZIP file containing all the necessary files for submission to the Chrome Web Store.
+
 ## Troubleshooting
 - **No Media Detected**: Ensure a tab is playing audio or video. Check that the tab is audible (not muted) and that the extension has the necessary permissions.
 - **Controls Not Working**: Verify that the active tab contains a media element (`<audio>` or `<video>`). Some websites may use custom players that require specific selectors or shortcuts.
